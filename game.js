@@ -175,10 +175,12 @@
     clearBoard();
     const warehouse = state.warehouse;
     const drawCount = Math.min(warehouse.length, 24);
-    const drawn = [];
-    for (let i = 0; i < drawCount; i++) {
-      drawn.push(warehouse[Math.floor(Math.random() * warehouse.length)]);
+    const copy = warehouse.slice();
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
     }
+    const drawn = copy.slice(0, drawCount);
     const slots = getEmptySlots();
     for (let i = slots.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));

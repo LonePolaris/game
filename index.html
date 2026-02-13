@@ -225,6 +225,41 @@
       width: 100%;
     }
     .close-btn:hover { background: #666; }
+    .log-panel {
+      background: var(--panel);
+      padding: 12px 16px;
+      border-radius: 16px;
+      margin-top: 16px;
+    }
+    .log-panel h3 {
+      font-size: 0.95rem;
+      color: var(--accent);
+      cursor: pointer;
+      user-select: none;
+      margin-bottom: 0;
+    }
+    .log-panel-toggle.collapsed { }
+    .log-panel-body { margin-top: 10px; }
+    .log-panel-body.collapsed { display: none; }
+    .log-list { font-size: 0.85rem; color: #c8d8c8; max-height: 320px; overflow-y: auto; }
+    .log-round {
+      margin-bottom: 12px;
+      border-left: 3px solid var(--accent);
+      padding-left: 10px;
+      background: rgba(0,0,0,0.15);
+      padding: 10px 12px;
+      border-radius: 0 8px 8px 0;
+    }
+    .log-round-header {
+      font-weight: bold;
+      color: var(--accent);
+      margin-bottom: 6px;
+      cursor: pointer;
+    }
+    .log-round-detail { margin-top: 6px; padding-left: 8px; }
+    .log-round-detail .line { margin: 3px 0; }
+    .log-round-detail .sub { color: #9ab89a; font-size: 0.9em; }
+    .log-round-detail .total { margin-top: 6px; font-weight: bold; color: #7cb87c; }
   </style>
 </head>
 <body>
@@ -249,6 +284,12 @@
     <div class="actions">
       <button class="btn btn-primary" id="btnPlant">种花</button>
       <button class="btn btn-shop" id="btnShop">格子商店</button>
+    </div>
+    <div class="log-panel">
+      <h3 class="log-panel-toggle" id="logPanelToggle">▼ 回合加分细则说明</h3>
+      <div class="log-panel-body" id="logPanelBody">
+        <div class="log-list" id="roundLogList">暂无记录，完成一回合种花后这里会显示该回合的加分细则。</div>
+      </div>
     </div>
   </div>
 

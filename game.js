@@ -13,7 +13,7 @@
       name: '红玫瑰',
       category: '鲜花类',
       categoryKey: 'flower',
-      effect: '每回合获得1积分，棋盘上每拥有N个红玫瑰，每回合可额外获得N积分。',
+      effect: '每回合固定基础加分：每回合获得1积分。每回合额外效果加分：棋盘上每拥有N个红玫瑰，每回合可额外获得N积分。',
       weight: 200
     },
     baibahe: {
@@ -21,7 +21,7 @@
       name: '白百何',
       category: '鲜花类',
       categoryKey: 'flower',
-      effect: '每回合获得2积分。',
+      effect: '每回合固定基础加分：每回合获得3积分。',
       weight: 200
     },
     youjialiye: {
@@ -29,7 +29,7 @@
       name: '尤加利叶',
       category: '鲜花类',
       categoryKey: 'flower',
-      effect: '使在棋盘上相邻格子的【鲜花类】种植物本回合获得的积分+1。',
+      effect: '每回合额外效果加分：使在棋盘上相邻格子的【鲜花类】种植物本回合获得的积分+1。',
       weight: 100
     },
     qiukui: {
@@ -37,7 +37,7 @@
       name: '秋葵',
       category: '惊喜类',
       categoryKey: 'surprise',
-      effect: '每回合获得5积分，位于棋盘的四个角落时，额外获得10积分。',
+      effect: '每回合固定基础加分：每回合获得5积分。每回合额外效果加分：位于棋盘的四个角落时，额外获得10积分。',
       weight: 50
     },
     xigua: {
@@ -45,7 +45,7 @@
       name: '西瓜',
       category: '惊喜类',
       categoryKey: 'surprise',
-      effect: '使与其相邻的【种植物】本回合可获得的积分翻倍。',
+      effect: '每回合额外效果加分：使与其相邻的【种植物】本回合可获得的积分翻倍。',
       weight: 30
     },
     bangbangtang: {
@@ -53,7 +53,7 @@
       name: '棒棒糖',
       category: '惊喜类',
       categoryKey: 'surprise',
-      effect: '使与雕像相邻的【种植物】本回合可获得的积分翻倍。',
+      effect: '每回合额外效果加分：使与雕像相邻的【种植物】本回合可获得的积分翻倍。',
       weight: 30
     },
     bengbengling: {
@@ -61,7 +61,7 @@
       name: '蹦蹦灵',
       category: '花灵类',
       categoryKey: 'spirit',
-      effect: '使得棋盘上不与任何【种植物】相邻的【种植物】积分+2。',
+      effect: '每回合额外效果加分：使得棋盘上不与任何【种植物】相邻的【种植物】积分+2。',
       weight: 20
     },
     wuwuling: {
@@ -69,7 +69,7 @@
       name: '呜呜灵',
       category: '花灵类',
       categoryKey: 'spirit',
-      effect: '本回合获得20积分，使与其相邻的【种植物】本回合不生效。',
+      effect: '每回合固定基础加分：本回合获得20积分。每回合额外效果加分：与其相邻的【种植物】本回合不生效。',
       weight: 20
     },
     guguling: {
@@ -77,7 +77,7 @@
       name: '咕咕灵',
       category: '花灵类',
       categoryKey: 'spirit',
-      effect: '若本回合仓库里没有出现在棋盘的【种植物】数量为N，则本回合额外获得N分。',
+      effect: '每回合额外效果加分：若本回合仓库里没有出现在棋盘的【种植物】数量为N，则本回合额外获得N分。',
       weight: 10
     }
   };
@@ -127,7 +127,8 @@
     warehouse: ['hongmeigui', 'baibahe', 'bengbengling'],
     board: new Array(25).fill(null),
     activeGridEffects: [],
-    nextRoundEffects: []
+    nextRoundEffects: [],
+    roundLogs: []
   };
 
   function getBoard() {
@@ -159,6 +160,17 @@
     state.roundCount++;
     if (state.roundCount % 5 === 0) state.coins++;
     applyGridEffectDurations();
+    state.roundLogs.push({
+      round: state.roundCount,
+      total: n,
+      gugudaji: true,
+      fixedLines: [],
+      fixedTotal: 0,
+      effectLines: ['咕咕大吉：本回合未抽取种植物，仓库数量 N = ' + n + '，+' + n + ' 分'],
+      effectTotal: 0,
+      hongmeiguiExtra: 0,
+      gugulingExtra: 0
+    });
     return { roundScore: n, boardScores: [], bonusRow: null };
   }
 
@@ -175,10 +187,12 @@
     clearBoard();
     const warehouse = state.warehouse;
     const drawCount = Math.min(warehouse.length, 24);
-    const drawn = [];
-    for (let i = 0; i < drawCount; i++) {
-      drawn.push(warehouse[Math.floor(Math.random() * warehouse.length)]);
+    const copy = warehouse.slice();
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
     }
+    const drawn = copy.slice(0, drawCount);
     const slots = getEmptySlots();
     for (let i = slots.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -203,34 +217,26 @@
       }
     }
 
-    let baseScores = new Array(25).fill(0);
     const hongmeiguiCount = board.filter(id => id === 'hongmeigui').length;
 
+    // 每回合固定基础加分：直接累加，不参与翻倍
+    const fixedScores = new Array(25).fill(0);
     for (let i = 0; i < 25; i++) {
       if (i === CENTER || !board[i] || silenced.has(i)) continue;
       const id = board[i];
-      const p = PLANTS[id];
-      if (!p) continue;
-      if (id === 'hongmeigui') baseScores[i] = 1 + hongmeiguiCount;
-      else if (id === 'baibahe') baseScores[i] = 2;
-      else if (id === 'youjialiye') baseScores[i] = 0;
-      else if (id === 'qiukui') {
-        baseScores[i] = 5;
-        if (CORNERS.includes(i)) baseScores[i] += 10;
-      } else if (id === 'xigua' || id === 'bangbangtang') baseScores[i] = 0;
-      else if (id === 'bengbengling') baseScores[i] = 0;
-      else if (id === 'wuwuling') baseScores[i] = 20;
-      else if (id === 'guguling') baseScores[i] = 0;
+      if (id === 'hongmeigui') fixedScores[i] = 1;
+      else if (id === 'baibahe') fixedScores[i] = 3;
+      else if (id === 'qiukui') fixedScores[i] = 5;
+      else if (id === 'wuwuling') fixedScores[i] = 20;
     }
 
-    const onBoardIds = new Set();
+    // 每回合额外效果加分：可被尤加利叶/西瓜/棒棒糖/蹦蹦灵/分来分来影响
+    let effectScores = new Array(25).fill(0);
     for (let i = 0; i < 25; i++) {
-      if (board[i]) onBoardIds.add(board[i]);
-    }
-    const warehouseSet = new Set(state.warehouse);
-    let gugulingBonus = 0;
-    for (const id of warehouseSet) {
-      if (!onBoardIds.has(id)) gugulingBonus++;
+      if (i === CENTER || !board[i] || silenced.has(i)) continue;
+      const id = board[i];
+      if (id === 'qiukui' && CORNERS.includes(i)) effectScores[i] = 10;
+      // 红玫瑰的 N 积分在最后单独加，不放在格子里
     }
 
     const youjialiyeAdd = new Array(25).fill(0);
@@ -242,8 +248,9 @@
         });
       }
     }
-    for (let i = 0; i < 25; i++) baseScores[i] += youjialiyeAdd[i];
+    for (let i = 0; i < 25; i++) effectScores[i] += youjialiyeAdd[i];
 
+    // 西瓜/棒棒糖只对额外效果加分翻倍
     const multipliers = new Array(25).fill(1);
     const hasBangbangtang = board.some(id => id === 'bangbangtang');
     for (let i = 0; i < 25; i++) {
@@ -260,13 +267,13 @@
       });
     }
 
-    let scores = baseScores.map((s, i) => Math.round(s * (multipliers[i] || 1)));
+    effectScores = effectScores.map((s, i) => Math.round(s * (multipliers[i] || 1)));
 
     for (let i = 0; i < 25; i++) {
       if (i === CENTER || !board[i] || silenced.has(i)) continue;
       const neighbors = getNeighbors(i);
       const hasPlantNeighbor = neighbors.some(idx => board[idx] !== null && idx !== CENTER);
-      if (!hasPlantNeighbor) scores[i] += 2;
+      if (!hasPlantNeighbor) effectScores[i] += 2;
     }
 
     let bonusRow = null;
@@ -275,16 +282,78 @@
       bonusRow = Math.floor(Math.random() * 5);
       for (let c = 0; c < 5; c++) {
         const idx = bonusRow * 5 + c;
-        if (board[idx]) scores[idx] += 2;
+        if (board[idx]) effectScores[idx] += 2;
       }
     }
 
-    let total = scores.reduce((a, b) => a + b, 0) + gugulingBonus;
+    // 每格显示分 = 固定基础 + 额外效果（格子上显示）
+    const scores = fixedScores.map((f, i) => f + effectScores[i]);
+
+    const onBoardIds = new Set();
+    for (let i = 0; i < 25; i++) {
+      if (board[i]) onBoardIds.add(board[i]);
+    }
+    const warehouseSet = new Set(state.warehouse);
+    let gugulingBonus = 0;
+    for (const id of warehouseSet) {
+      if (!onBoardIds.has(id)) gugulingBonus++;
+    }
+
+    // 总积分 = 格子分之和 + 红玫瑰额外N + 咕咕灵额外N
+    let total = scores.reduce((a, b) => a + b, 0) + hongmeiguiCount + gugulingBonus;
     state.totalScore += total;
     state.roundCount++;
     if (state.roundCount % 5 === 0) state.coins++;
 
     applyGridEffectDurations();
+
+    // 记录本回合加分细则
+    const fixedTotal = fixedScores.reduce((a, b) => a + b, 0);
+    const effectTotal = effectScores.reduce((a, b) => a + b, 0);
+    const plantCounts = {};
+    for (let i = 0; i < 25; i++) {
+      if (i === CENTER || !board[i] || silenced.has(i)) continue;
+      const id = board[i];
+      plantCounts[id] = (plantCounts[id] || 0) + 1;
+    }
+    const fixedLines = [];
+    if (plantCounts.hongmeigui) fixedLines.push('红玫瑰 × ' + plantCounts.hongmeigui + ' = ' + (plantCounts.hongmeigui * 1));
+    if (plantCounts.baibahe) fixedLines.push('白百何 × ' + plantCounts.baibahe + ' = ' + (plantCounts.baibahe * 3));
+    if (plantCounts.qiukui) fixedLines.push('秋葵 × ' + plantCounts.qiukui + ' = ' + (plantCounts.qiukui * 5));
+    if (plantCounts.wuwuling) fixedLines.push('呜呜灵 × ' + plantCounts.wuwuling + ' = ' + (plantCounts.wuwuling * 20));
+
+    let isolatedCount = 0;
+    for (let i = 0; i < 25; i++) {
+      if (i === CENTER || !board[i] || silenced.has(i)) continue;
+      const neighbors = getNeighbors(i);
+      if (!neighbors.some(idx => board[idx] !== null && idx !== CENTER)) isolatedCount++;
+    }
+    const youjialiyeSum = youjialiyeAdd.reduce((a, b) => a + b, 0);
+    const effectLines = [];
+    if (youjialiyeSum > 0) effectLines.push('尤加利叶：相邻鲜花类 +1，共 +' + youjialiyeSum + ' 分');
+    const qiukuiCorner = CORNERS.filter(c => board[c] === 'qiukui').length;
+    if (qiukuiCorner > 0) effectLines.push('秋葵角落：' + qiukuiCorner + ' 格 × 10 = +' + (qiukuiCorner * 10) + ' 分');
+    if (hasBangbangtang) effectLines.push('棒棒糖：与雕像相邻的种植物积分翻倍');
+    const xiguaCount = board.filter(id => id === 'xigua').length;
+    if (xiguaCount > 0) effectLines.push('西瓜：与其相邻的种植物积分翻倍');
+    if (isolatedCount > 0) effectLines.push('蹦蹦灵：孤立种植物 +2，共 ' + isolatedCount + ' 格 = +' + (isolatedCount * 2) + ' 分');
+    if (bonusRow !== null) {
+      const rowCount = [0,1,2,3,4].filter(c => board[bonusRow * 5 + c]).length;
+      if (rowCount > 0) effectLines.push('分来分来：第 ' + (bonusRow + 1) + ' 排 +2，共 ' + rowCount + ' 格 = +' + (rowCount * 2) + ' 分');
+    }
+    if (hongmeiguiCount > 0) effectLines.push('红玫瑰额外：棋盘 N = ' + hongmeiguiCount + '，+' + hongmeiguiCount + ' 分');
+    if (gugulingBonus > 0) effectLines.push('咕咕灵：仓库未上场种类 N = ' + gugulingBonus + '，+' + gugulingBonus + ' 分');
+
+    state.roundLogs.push({
+      round: state.roundCount,
+      total,
+      fixedLines,
+      fixedTotal,
+      effectLines,
+      effectTotal,
+      hongmeiguiExtra: hongmeiguiCount,
+      gugulingExtra: gugulingBonus
+    });
 
     return {
       roundScore: total,
@@ -360,6 +429,28 @@
     }).join('、');
   }
 
+  function renderRoundLogs() {
+    const el = document.getElementById('roundLogList');
+    if (!el) return;
+    if (state.roundLogs.length === 0) {
+      el.innerHTML = '暂无记录，完成一回合种花后这里会显示该回合的加分细则。';
+      return;
+    }
+    el.innerHTML = state.roundLogs.map((entry, idx) => {
+      const fixedBlock = entry.fixedLines.length
+        ? '<div class="sub">固定基础加分：</div>' + entry.fixedLines.map(l => '<div class="line">' + l + '</div>').join('') + '<div class="line">小计：' + entry.fixedTotal + ' 分</div>'
+        : '';
+      const effectBlock = entry.effectLines.length
+        ? '<div class="sub">额外效果加分：</div>' + entry.effectLines.map(l => '<div class="line">' + l + '</div>').join('') + (entry.effectTotal > 0 ? '<div class="line">格子额外效果小计：' + entry.effectTotal + ' 分</div>' : '')
+        : '';
+      const totalLine = '<div class="total">本回合合计：' + entry.total + ' 分</div>';
+      return '<div class="log-round" data-idx="' + idx + '">' +
+        '<div class="log-round-header">第 ' + entry.round + ' 回合' + (entry.gugudaji ? '（咕咕大吉）' : '') + '：' + entry.total + ' 分</div>' +
+        '<div class="log-round-detail">' + fixedBlock + effectBlock + totalLine + '</div>' +
+        '</div>';
+    }).join('');
+  }
+
   function showPlantDetail(plantId) {
     const p = PLANTS[plantId];
     if (!p) return;
@@ -406,6 +497,7 @@
       renderBoard([], null);
       renderTopBar();
       renderEffectsPanel();
+      renderRoundLogs();
       showRoundScore(result.roundScore, () => {
         showChoice(pickThreePlants(), () => {});
       });
@@ -417,6 +509,7 @@
     renderBoard(boardScores, bonusRow);
     renderTopBar();
     renderEffectsPanel();
+    renderRoundLogs();
 
     showRoundScore(roundScore, () => {
       showChoice(pickThreePlants(), () => {});
@@ -472,4 +565,15 @@
   renderWarehouse();
   renderTopBar();
   renderEffectsPanel();
+  renderRoundLogs();
+
+  const logToggle = document.getElementById('logPanelToggle');
+  const logBody = document.getElementById('logPanelBody');
+  if (logToggle && logBody) {
+    logToggle.addEventListener('click', () => {
+      logBody.classList.toggle('collapsed');
+      logToggle.classList.toggle('collapsed');
+      logToggle.textContent = logBody.classList.contains('collapsed') ? '▶ 回合加分细则说明' : '▼ 回合加分细则说明';
+    });
+  }
 })();

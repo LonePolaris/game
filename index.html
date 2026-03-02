@@ -1,288 +1,510 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>幸运花圃</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>香水工坊 · 挂机小游戏</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #1a2f1a;
-      --panel: #2d4a2d;
-      --accent: #e8b4b8;
-      --flower: #c45c66;
-      --surprise: #f4d03f;
-      --spirit: #a78bfa;
-      --statue: #8b7355;
-      --text: #f0ebe0;
-      --safe: #7cb87c;
-      --radical: #e07a5f;
+      --bg: #1a1625;
+      --card: #252030;
+      --accent: #c9a86c;
+      --accent-dim: #8b7355;
+      --text: #e8e0d5;
+      --muted: #9a8f82;
+      --success: #7cb87c;
+      --danger: #c75c5c;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; }
     body {
-      font-family: 'ZCOOL KuaiLe', 'Ma Shan Zheng', sans-serif;
+      margin: 0;
+      min-height: 100vh;
       background: var(--bg);
       color: var(--text);
-      min-height: 100vh;
-      background-image: radial-gradient(ellipse at 50% 0%, #2d5a2d 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 80%, #1e3d1e 0%, transparent 40%);
+      font-family: 'Noto Serif SC', serif;
+      background-image: radial-gradient(ellipse at 50% 0%, rgba(201,168,108,0.08) 0%, transparent 50%);
     }
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 16px;
-    }
+    .container { max-width: 900px; margin: 0 auto; padding: 1rem; }
+    .gold-bar { text-align: center; margin-bottom: 0.75rem; font-size: 1rem; color: var(--accent); }
+    .gold-bar .gold-label { margin-right: 0.35rem; }
+    .gold-bar .gold-value { font-weight: 600; }
     h1 {
+      font-family: 'ZCOOL QingKe HuangYou', sans-serif;
+      font-weight: 400;
       text-align: center;
-      font-size: 2rem;
-      margin-bottom: 12px;
       color: var(--accent);
-      text-shadow: 0 0 20px rgba(232,180,184,0.3);
+      margin: 0.5rem 0 1rem;
+      font-size: 1.75rem;
     }
-    .top-bar {
+    .tabs {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
       flex-wrap: wrap;
-      gap: 8px;
     }
-    .score-box, .round-box, .coin-box {
-      background: var(--panel);
-      padding: 8px 16px;
-      border-radius: 12px;
-      font-size: 1.1rem;
+    .tabs button {
+      background: var(--card);
+      border: 1px solid var(--accent-dim);
+      color: var(--text);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
     }
-    .score-box { color: #7cb87c; }
-    .coin-box { color: var(--surprise); }
-    .board-wrap {
-      background: var(--panel);
-      padding: 20px;
-      border-radius: 16px;
-      margin-bottom: 16px;
-      box-shadow: inset 0 0 30px rgba(0,0,0,0.3);
-    }
-    .board {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 6px;
-      max-width: 320px;
-      margin: 0 auto;
-    }
-    .cell {
-      aspect-ratio: 1;
+    .tabs button.active { background: var(--accent-dim); color: var(--bg); }
+    .tabs button:hover:not(.active) { background: #2d2838; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .card {
+      background: var(--card);
       border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+      border: 1px solid rgba(201,168,108,0.2);
+    }
+    .card h2 {
+      font-size: 1rem;
+      color: var(--accent);
+      margin: 0 0 0.75rem;
+      font-weight: 600;
+    }
+    .inventory-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 0.5rem;
+    }
+    .inv-item {
+      background: rgba(0,0,0,0.2);
+      padding: 0.4rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      font-size: 0.7rem;
-      min-height: 52px;
-      transition: transform 0.2s, box-shadow 0.2s;
-      position: relative;
+      justify-content: space-between;
+      gap: 0.25rem;
+    }
+    .inv-item .name { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+    .inv-item .num { color: var(--accent); font-weight: 600; }
+    .inv-item.special { border-left: 3px solid var(--accent); }
+    .inv-item.item { border-left: 3px solid #7cb87c; }
+    .idle-area {
+      text-align: center;
+      padding: 1rem 0;
+    }
+    .idle-btn {
+      background: linear-gradient(180deg, var(--accent), var(--accent-dim));
+      color: var(--bg);
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-family: inherit;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .idle-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .idle-btn:hover:not(:disabled) { filter: brightness(1.1); }
+    .idle-progress-wrap { margin: 1rem 0; }
+    .idle-remaining { font-size: 0.95rem; color: var(--muted); margin-bottom: 0.35rem; }
+    .idle-progress {
+      height: 8px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 4px;
+      margin-bottom: 0.75rem;
       overflow: hidden;
     }
-    .cell.statue {
-      background: linear-gradient(145deg, #6b5344, #8b7355);
-      color: #e8dcc8;
-      font-weight: bold;
-      box-shadow: inset 0 2px 4px rgba(255,255,255,0.1);
+    .idle-progress .bar {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.3s;
     }
-    .cell.empty {
-      background: rgba(60, 90, 60, 0.6);
-      border: 2px dashed rgba(255,255,255,0.2);
-    }
-    .cell.flower { background: linear-gradient(145deg, #a04050, #c45c66); }
-    .cell.surprise { background: linear-gradient(145deg, #c9a227, #f4d03f); color: #2d2d2d; }
-    .cell.spirit { background: linear-gradient(145deg, #7c5fd4, #a78bfa); }
-    .cell.effect-row { box-shadow: 0 0 0 3px var(--safe); }
-    .cell .name { font-size: 0.6rem; line-height: 1.1; }
-    .cell .pts { font-weight: bold; margin-top: 2px; color: #fff; }
-    .warehouse-wrap {
-      background: var(--panel);
-      padding: 16px;
-      border-radius: 16px;
-      margin-bottom: 16px;
-    }
-    .warehouse-wrap h3 { margin-bottom: 10px; font-size: 1rem; color: var(--accent); }
-    .warehouse {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .warehouse-item {
-      padding: 8px 12px;
-      border-radius: 10px;
-      cursor: pointer;
+    .idle-skip-btn { padding: 0.4rem 1rem; font-size: 0.9rem; }
+    .idle-reward { margin-top: 1rem; color: var(--muted); font-size: 0.95rem; }
+    .idle-reward .got { color: var(--success); }
+    .special-item-select {
+      margin-top: 1rem;
       font-size: 0.9rem;
-      transition: transform 0.15s, box-shadow 0.15s;
+      color: var(--muted);
     }
-    .warehouse-item:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-    .warehouse-item.flower { background: var(--flower); color: #fff; }
-    .warehouse-item.surprise { background: var(--surprise); color: #2d2d2d; }
-    .warehouse-item.spirit { background: var(--spirit); color: #fff; }
-    .effects-panel {
-      background: var(--panel);
-      padding: 10px 16px;
-      border-radius: 12px;
-      margin-bottom: 16px;
-      min-height: 44px;
+    .special-item-select select {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--accent-dim);
+      padding: 0.35rem 0.5rem;
+      border-radius: 4px;
+      margin-left: 0.5rem;
+      font-family: inherit;
     }
-    .effects-panel h3 { font-size: 0.95rem; margin-bottom: 6px; color: var(--accent); }
-    .effects-list { font-size: 0.85rem; color: #b8d4b8; }
-    .actions {
+    .craft-row {
       display: flex;
-      gap: 12px;
       flex-wrap: wrap;
-      margin-bottom: 16px;
+      gap: 0.75rem;
+      align-items: flex-end;
+      margin-bottom: 1rem;
     }
-    .btn {
-      padding: 12px 24px;
-      border: none;
-      border-radius: 12px;
-      font-family: inherit;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: transform 0.1s, box-shadow 0.2s;
-    }
-    .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-    .btn-primary {
-      background: linear-gradient(145deg, #4a7c4a, #5a9c5a);
-      color: #fff;
-    }
-    .btn-shop {
-      background: linear-gradient(145deg, #8b6914, #c9a227);
-      color: #fff;
-    }
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      padding: 16px;
-    }
-    .modal.show { display: flex; }
-    .modal-content {
-      background: var(--panel);
-      border-radius: 16px;
-      padding: 24px;
-      max-width: 400px;
-      width: 100%;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-    }
-    .modal-content h3 { margin-bottom: 12px; color: var(--accent); }
-    .modal-content p { margin-bottom: 8px; font-size: 0.95rem; line-height: 1.5; }
-    .choice-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
-    .choice-btn {
-      padding: 12px 16px;
-      border-radius: 10px;
-      border: 2px solid transparent;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 1rem;
-      text-align: left;
-      transition: all 0.2s;
-    }
-    .choice-btn:hover { border-color: var(--accent); transform: scale(1.02); }
-    .choice-btn.flower { background: rgba(196,92,102,0.4); }
-    .choice-btn.surprise { background: rgba(244,208,63,0.3); color: #2d2d2d; }
-    .choice-btn.spirit { background: rgba(167,123,250,0.4); }
-    .shop-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
-    .shop-item {
+    .craft-row label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.25rem; }
+    .craft-materials {
       display: flex;
-      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
       align-items: center;
-      padding: 12px;
+    }
+    .craft-materials select {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--accent-dim);
+      padding: 0.4rem 0.6rem;
+      border-radius: 4px;
+      font-family: inherit;
+      min-width: 90px;
+    }
+    .craft-result {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      white-space: pre-line;
+    }
+    .craft-result.success { background: rgba(124,184,124,0.2); color: var(--success); }
+    .craft-result.fail { background: rgba(199,92,92,0.2); color: var(--danger); }
+    .perfume-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .perfume-entry {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding: 0.6rem 0.8rem;
       background: rgba(0,0,0,0.2);
-      border-radius: 10px;
+      border-radius: 6px;
+      border-left: 3px solid transparent;
     }
-    .shop-item button {
-      padding: 8px 16px;
-      border-radius: 8px;
-      border: none;
-      font-family: inherit;
+    .perfume-entry.unlocked { border-left-color: var(--accent); }
+    .perfume-entry .name { font-weight: 600; }
+    .perfume-entry .formula { color: var(--muted); font-size: 0.9rem; display: flex; align-items: center; gap: 0.25rem; flex-wrap: wrap; }
+    .perfume-entry .formula .unk { color: #6a5f55; }
+    .perfume-entry .formula .formula-icon { font-size: 1.1rem; line-height: 1; }
+    .save-load { display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; }
+    .save-load button {
+      background: var(--card);
+      border: 1px solid var(--accent-dim);
+      color: var(--text);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
       cursor: pointer;
-      background: var(--surprise);
-      color: #2d2d2d;
-    }
-    .shop-item button:disabled { opacity: 0.5; cursor: not-allowed; }
-    .close-btn {
-      margin-top: 16px;
-      padding: 10px 20px;
-      border-radius: 10px;
-      border: none;
       font-family: inherit;
-      cursor: pointer;
-      background: #555;
-      color: #fff;
-      width: 100%;
+      font-size: 0.85rem;
     }
-    .close-btn:hover { background: #666; }
+    .save-load button:hover { background: #2d2838; }
+    .toast-container { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem; pointer-events: none; }
+    .toast { background: var(--card); border: 1px solid var(--danger); color: var(--text); padding: 0.6rem 1rem; border-radius: 8px; font-size: 0.9rem; box-shadow: 0 4px 12px rgba(0,0,0,0.4); animation: toast-in 0.25s ease; }
+    @keyframes toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
 <body>
+  <div id="toast-container" class="toast-container"></div>
   <div class="container">
-    <h1>幸运花圃</h1>
-    <div class="top-bar">
-      <div class="score-box">总积分：<span id="totalScore">0</span></div>
-      <div class="round-box">回合：<span id="roundCount">0</span></div>
-      <div class="coin-box">兑换币：<span id="coinCount">0</span></div>
+    <h1>香水工坊</h1>
+    <div class="gold-bar">
+      <span class="gold-label">🪙 金币</span>
+      <span class="gold-value" id="gold-value">0</span>
     </div>
-    <div class="effects-panel">
-      <h3>生效中的格子效果</h3>
-      <div class="effects-list" id="effectsList">暂无</div>
+    <div class="tabs">
+      <button type="button" class="tab active" data-tab="inventory">背包</button>
+      <button type="button" class="tab" data-tab="idle">挂机</button>
+      <button type="button" class="tab" data-tab="craft">制作</button>
+      <button type="button" class="tab" data-tab="index">图鉴</button>
     </div>
-    <div class="board-wrap">
-      <div class="board" id="board"></div>
+
+    <div id="panel-inventory" class="panel active">
+      <div class="card">
+        <h2>普通材料</h2>
+        <div class="inventory-grid" id="inv-common"></div>
+      </div>
+      <div class="card">
+        <h2>特殊材料</h2>
+        <div class="inventory-grid" id="inv-special"></div>
+      </div>
+      <div class="card">
+        <h2>特殊道具（挂机时携带可获得对应特殊材料）</h2>
+        <div class="inventory-grid" id="inv-items"></div>
+      </div>
+      <div class="save-load">
+        <button type="button" id="btn-save">保存进度</button>
+        <button type="button" id="btn-load">读取进度</button>
+      </div>
     </div>
-    <div class="warehouse-wrap">
-      <h3>仓库 · 点击查看详情</h3>
-      <div class="warehouse" id="warehouse"></div>
+
+    <div id="panel-idle" class="panel">
+      <div class="card">
+        <h2>挂机采集</h2>
+        <p style="color: var(--muted); font-size: 0.9rem;">每次挂机 <strong>30 分钟</strong>，获得 2～3 个随机普通材料。携带特殊道具可在结束时额外获得对应特殊材料。可消耗金币跳过等待。</p>
+        <div class="special-item-select">
+          本次携带特殊道具：
+          <select id="idle-special-item">
+            <option value="">不携带</option>
+          </select>
+        </div>
+        <div class="idle-area">
+          <button type="button" class="idle-btn" id="btn-idle">开始挂机</button>
+          <div class="idle-progress-wrap" id="idle-progress" style="display:none;">
+            <div class="idle-remaining" id="idle-remaining">剩余 30:00</div>
+            <div class="idle-progress">
+              <div class="bar" id="idle-progress-bar"></div>
+            </div>
+            <button type="button" class="idle-btn idle-skip-btn" id="btn-idle-skip">跳过 (消耗 15 金币)</button>
+          </div>
+          <div class="idle-reward" id="idle-reward"></div>
+        </div>
+      </div>
     </div>
-    <div class="actions">
-      <button class="btn btn-primary" id="btnPlant">种花</button>
-      <button class="btn btn-shop" id="btnShop">格子商店</button>
+
+    <div id="panel-craft" class="panel">
+      <div class="card">
+        <h2>制作香水</h2>
+        <p style="color: var(--muted); font-size: 0.9rem;">选择 1～3 种普通材料，可选 1 种特殊材料。仅当公式正确时成功；首次成功消耗材料并解锁，失败或已解锁配方不消耗材料。</p>
+        <div class="craft-row">
+          <div>
+            <label>普通材料（选 1～3 种）</label>
+            <div class="craft-materials" id="craft-common"></div>
+          </div>
+        </div>
+        <div class="craft-row">
+          <div>
+            <label>特殊材料（可选 1 种）</label>
+            <select id="craft-special">
+              <option value="">无</option>
+            </select>
+          </div>
+        </div>
+        <button type="button" class="idle-btn" id="btn-craft" style="padding: 0.5rem 1.25rem; font-size: 1rem;">尝试制作</button>
+        <div class="craft-result" id="craft-result"></div>
+      </div>
+    </div>
+
+    <div id="panel-index" class="panel">
+      <div class="card">
+        <h2>香水图鉴</h2>
+        <p style="color: var(--muted); font-size: 0.9rem;">尝试制作会逐步揭示公式，组合不看顺序。</p>
+        <div class="perfume-list" id="perfume-index"></div>
+      </div>
     </div>
   </div>
 
-  <div class="modal" id="modalPlantDetail">
-    <div class="modal-content">
-      <h3 id="detailTitle">种植物详情</h3>
-      <p id="detailName"></p>
-      <p id="detailCategory"></p>
-      <p id="detailEffect"></p>
-      <button class="close-btn" id="closeDetail">关闭</button>
-    </div>
-  </div>
-  <div class="modal" id="modalChoice">
-    <div class="modal-content">
-      <h3>选择一种种植物加入仓库</h3>
-      <div class="choice-list" id="choiceList"></div>
-    </div>
-  </div>
-  <div class="modal" id="modalScore">
-    <div class="modal-content">
-      <h3>本回合得分</h3>
-      <p id="roundScoreText">0 积分</p>
-      <button class="close-btn" id="closeScore">确定</button>
-    </div>
-  </div>
-  <div class="modal" id="modalShop">
-    <div class="modal-content">
-      <h3>格子商店</h3>
-      <p style="margin-bottom:12px">兑换币：<strong id="shopCoinDisplay">0</strong></p>
-      <div class="shop-list" id="shopList"></div>
-      <button class="close-btn" id="closeShop">关闭</button>
-    </div>
-  </div>
-
+  <script src="data.js"></script>
   <script src="game.js"></script>
+  <script>
+    const game = new Game();
+
+    function renderInventory() {
+      const commonEl = document.getElementById('inv-common');
+      const specialEl = document.getElementById('inv-special');
+      const itemsEl = document.getElementById('inv-items');
+      commonEl.innerHTML = COMMON_MATERIALS_IN_USE.map(m =>
+        `<div class="inv-item"><span class="name">${m} ${MATERIAL_ICONS[m] || ''}</span><span class="num">×${game.getCommonCount(m)}</span></div>`
+      ).join('');
+      specialEl.innerHTML = SPECIAL_MATERIALS.map(m =>
+        `<div class="inv-item special"><span class="name">${m} ${MATERIAL_ICONS[m] || ''}</span><span class="num">×${game.getSpecialCount(m)}</span></div>`
+      ).join('');
+      itemsEl.innerHTML = SPECIAL_ITEMS.map(it => {
+        const n = game.getSpecialItemCount(it.id);
+        return `<div class="inv-item item"><span class="name">${it.name}</span><span class="num">×${n}</span></div>`;
+      }).join('');
+    }
+
+    function renderIdleSpecialSelect() {
+      const sel = document.getElementById('idle-special-item');
+      const opts = ['<option value="">不携带</option>'];
+      SPECIAL_ITEMS.forEach(it => {
+        const n = game.getSpecialItemCount(it.id);
+        if (n > 0) opts.push(`<option value="${it.id}">${it.name} (×${n})</option>`);
+      });
+      sel.innerHTML = opts.join('');
+    }
+
+    function renderCraftOptions() {
+      const commonContainer = document.getElementById('craft-common');
+      const selects = [];
+      for (let i = 0; i < 3; i++) {
+        const s = document.createElement('select');
+        s.dataset.slot = i;
+        s.innerHTML = '<option value="">--</option>' + COMMON_MATERIALS_IN_USE.map(m => {
+          const n = game.getCommonCount(m);
+          return `<option value="${m}"${n === 0 ? ' disabled' : ''}>${m} ${MATERIAL_ICONS[m] || ''} (×${n})</option>`;
+        }).join('');
+        commonContainer.appendChild(s);
+        selects.push(s);
+      }
+      const specialSel = document.getElementById('craft-special');
+      specialSel.innerHTML = '<option value="">无</option>' + SPECIAL_MATERIALS.map(m => {
+        const n = game.getSpecialCount(m);
+        return `<option value="${m}"${n === 0 ? ' disabled' : ''}>${m} ${MATERIAL_ICONS[m] || ''} (×${n})</option>`;
+      }).join('');
+    }
+
+    function getCraftSelection() {
+      const common = [];
+      document.querySelectorAll('#craft-common select').forEach(s => { if (s.value) common.push(s.value); });
+      const special = document.getElementById('craft-special').value || null;
+      return { common, special };
+    }
+
+    function renderPerfumeIndex() {
+      const list = document.getElementById('perfume-index');
+      const perfumes = getAllPerfumes();
+      list.innerHTML = perfumes.map(p => {
+        const unlocked = game.isPerfumeUnlocked(p.id);
+        const formulaDisplay = game.getFormulaDisplay(p);
+        const formulaStr = formulaDisplay.map(x => {
+          if (x === '?') return '<span class="unk">?</span>';
+          const icon = MATERIAL_ICONS[x];
+          return icon ? `<span class="formula-icon" title="${x}">${icon}</span>` : x;
+        }).join(' ');
+        return `<div class="perfume-entry ${unlocked ? 'unlocked' : ''}">
+          <span class="name">${p.name}</span>
+          <span class="formula">[ ${formulaStr} ]</span>
+        </div>`;
+      }).join('');
+    }
+
+    function showCraftResult(msg, isSuccess) {
+      const el = document.getElementById('craft-result');
+      el.textContent = msg;
+      el.className = 'craft-result ' + (isSuccess ? 'success' : 'fail');
+      el.style.display = 'block';
+    }
+
+    function showToast(msg) {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      el.className = 'toast';
+      el.textContent = msg;
+      container.appendChild(el);
+      setTimeout(() => el.remove(), 2500);
+    }
+
+    document.getElementById('craft-common').addEventListener('change', (e) => {
+      if (e.target.tagName === 'SELECT' && e.target.value && game.getCommonCount(e.target.value) === 0) showToast('材料不足');
+    });
+    document.getElementById('craft-special').addEventListener('change', (e) => {
+      if (e.target.value && game.getSpecialCount(e.target.value) === 0) showToast('材料不足');
+    });
+
+    function updateGoldDisplay() {
+      document.getElementById('gold-value').textContent = game.getGold();
+    }
+
+    function formatRemaining(ms) {
+      const totalSec = Math.ceil(ms / 1000);
+      const min = Math.floor(totalSec / 60);
+      const sec = totalSec % 60;
+      return '剩余 ' + min + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    function refreshAll() {
+      renderInventory();
+      renderIdleSpecialSelect();
+      renderPerfumeIndex();
+      updateGoldDisplay();
+      const specialSel = document.getElementById('craft-special');
+      if (specialSel.options.length > 1) {
+        const cur = specialSel.value;
+        specialSel.innerHTML = '<option value="">无</option>' + SPECIAL_MATERIALS.map(m => {
+          const n = game.getSpecialCount(m);
+          return `<option value="${m}"${n === 0 ? ' disabled' : ''}>${m} ${MATERIAL_ICONS[m] || ''} (×${n})</option>`;
+        }).join('');
+        if (cur && game.getSpecialCount(cur) > 0) specialSel.value = cur;
+        else specialSel.value = '';
+      }
+      const commonSlots = document.querySelectorAll('#craft-common select');
+      commonSlots.forEach((s, i) => {
+        const cur = s.value;
+        s.innerHTML = '<option value="">--</option>' + COMMON_MATERIALS_IN_USE.map(m => {
+          const n = game.getCommonCount(m);
+          return `<option value="${m}"${n === 0 ? ' disabled' : ''}>${m} ${MATERIAL_ICONS[m] || ''} (×${n})</option>`;
+        }).join('');
+        if (cur && game.getCommonCount(cur) > 0) s.value = cur;
+        else s.value = '';
+      });
+    }
+
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    document.getElementById('btn-idle').addEventListener('click', () => {
+      const sel = document.getElementById('idle-special-item');
+      game.selectSpecialItemForIdle(sel.value || null);
+      document.getElementById('idle-reward').textContent = '';
+      document.getElementById('idle-progress').style.display = 'block';
+      document.getElementById('idle-progress-bar').style.width = '0%';
+      document.getElementById('idle-remaining').textContent = formatRemaining(30 * 60 * 1000);
+      document.getElementById('btn-idle-skip').textContent = '跳过 (消耗 ' + game.getSkipIdleCost() + ' 金币)';
+      document.getElementById('btn-idle').disabled = true;
+      game.startIdle(
+        (p, elapsed) => {
+          document.getElementById('idle-progress-bar').style.width = (p * 100) + '%';
+          document.getElementById('idle-remaining').textContent = formatRemaining(game.getIdleRemainingMs());
+        },
+        (reward) => {
+          document.getElementById('btn-idle').disabled = false;
+          document.getElementById('idle-progress').style.display = 'none';
+          let msg = '获得：' + reward.common.join('、');
+          if (reward.special) msg += '，以及特殊材料 ' + reward.special;
+          if (reward.newSpecialItem) msg += '。解锁材料达 ' + game.getUnlockedMaterialCount() + ' 种，获得特殊道具「' + reward.newSpecialItem.name + '」';
+          document.getElementById('idle-reward').innerHTML = '<span class="got">' + msg + '</span>';
+          refreshAll();
+        }
+      );
+    });
+
+    document.getElementById('btn-idle-skip').addEventListener('click', () => {
+      if (!game.skipIdle()) showToast('金币不足');
+    });
+
+    document.getElementById('btn-craft').addEventListener('click', () => {
+      const { common, special } = getCraftSelection();
+      if (common.length === 0) { showCraftResult('请至少选择一种普通材料。', false); return; }
+      const result = game.craft(common, special);
+      refreshAll();
+      if (result.success) {
+        if (result.consumed) showCraftResult('制作成功！解锁香水「' + result.perfume.name + '」，获得 ' + result.goldEarned + ' 金币', true);
+        else showCraftResult('制作成功（已解锁，未消耗材料）：' + result.perfume.name, true);
+      } else {
+        if (result.reason === 'insufficient') showCraftResult('材料不足，未消耗材料。', false);
+        else showCraftResult(result.hint ? '制作失败，未消耗材料。' + (result.hint ? '\n\n' + result.hint : '') : '制作失败，未消耗材料。', false);
+      }
+    });
+
+    document.getElementById('btn-save').addEventListener('click', () => {
+      try {
+        localStorage.setItem('perfumeWorkshopSave', game.save());
+        alert('进度已保存。');
+      } catch (e) { alert('保存失败'); }
+    });
+
+    document.getElementById('btn-load').addEventListener('click', () => {
+      try {
+        const data = localStorage.getItem('perfumeWorkshopSave');
+        if (data) { game.load(data); refreshAll(); alert('进度已读取。'); }
+        else alert('没有找到存档。');
+      } catch (e) { alert('读取失败'); }
+    });
+
+    renderInventory();
+    renderIdleSpecialSelect();
+    renderCraftOptions();
+    renderPerfumeIndex();
+    updateGoldDisplay();
+  </script>
 </body>
 </html>
